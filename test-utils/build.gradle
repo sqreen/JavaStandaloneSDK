@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.amazonaws:aws-java-sdk-core:1.11.5'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'ivy-publish'
+}
+
+group 'io.sqreen'
+version '0.1.0'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+    compile(*project.guavaDependency)
+
+    compile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+    compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.4.17'
+    compile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'org.gmock', name: 'gmock', version: '0.8.3'
+
+    // version with servlet removed because of conflicts in the agent
+    compile group: 'com.github.tomakehurst', name: 'wiremock-standalone-no-servlet', version: '2.10.1' // not java 6 compat :(
+}
+

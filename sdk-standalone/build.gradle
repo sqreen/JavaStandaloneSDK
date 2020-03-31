@@ -1,0 +1,172 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
+plugins {
+    id 'java'
+    id 'groovy'
+    id 'jacoco'
+    id 'maven'
+    id 'signing'
+}
+
+group 'io.sqreen'
+version '0.1.0'
+
+allprojects {
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+    repositories {
+        jcenter()
+        ivy {
+            artifactPattern 'http://sqreen-ci-java.s3-website-us-east-1.amazonaws.com/jars/[organisation]/[artifact]-[revision](-[classifier]).[ext]'
+            ivyPattern 'http://sqreen-ci-java.s3-website-us-east-1.amazonaws.com/jars/[organisation]/[module]-[revision].xml'
+        }
+    }
+
+    project.metaClass.guavaDependency =
+        [[group: 'com.google.guava', name: 'guava', version: '20.0'], { // last version for java6
+            exclude group: 'com.google.code.findbugs', module: 'jsr305'
+                exclude group: 'com.google.errorprone',    module: 'error_prone_annotations'
+                exclude group: 'com.google.j2objc',        module: 'j2objc-annotations'
+                exclude group: 'org.codehaus.mojo',        module: 'animal-sniffer-annotations'
+        }]
+}
+
+
+dependencies {
+    compile(*project.guavaDependency)
+
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.10'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.7.9' // last version for java6
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.9.1'
+
+    testCompile project(':test-utils')
+    testRuntime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+    testRuntime group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0' /* wiremock needs 3.1 */
+}
+
+test {
+    systemProperty 'org.slf4j.simpleLogger.defaultLogLevel', 'debug'
+    systemProperty 'org.slf4j.simpleLogger.showDateTime', 'true'
+    systemProperty 'org.slf4j.simpleLogger.dateTimeFormat', 'HH:mm:ss.SSS'
+    systemProperty 'org.slf4j.simpleLogger.log.wiremock', 'info'
+}
+
+jacoco {
+    toolVersion = '0.8.5'
+}
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'sqreen-sdk-standalone'
+        attributes 'Implementation-Version': project.version
+    }
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier.set 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    archiveClassifier.set 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+def doingSigs = false
+if (project.hasProperty('signing.password') &&
+        project.hasProperty('signing.secretKeyFile')) {
+    signing {
+        useInMemoryPgpKeys(
+                new File(project."signing.secretKeyFile").text,
+                         project."signing.password")
+        sign configurations.archives
+    }
+    doingSigs = true
+}
+
+def ossrhUsername = project.hasProperty('ossrhUser') ? project.ossrhUser : ''
+def ossrhPasswd = project.hasProperty('ossrhPassword') ? project.ossrhPassword : ''
+
+if (doingSigs && ossrhUsername && ossrhPassword) {
+    logger.info('OSSRH credentials and signing password are available')
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+                     authentication(userName: ossrhUsername, password: ossrhPasswd)
+                }
+
+                snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                    authentication(userName: ossrhUsername, password: ossrhPasswd)
+                }
+
+                pom.project {
+                    name 'Sqreen Java Standalone SDK'
+                    artifactId 'sdk-standalone'
+                    packaging 'jar'
+                    url 'https://github.com/sqreen/JavaStandaloneSDK'
+
+                    description 'Client for submission of signals to Sqreen’s signal ingestion endpoint.'
+
+                    scm {
+                        connection 'scm:git:git://github.com/sqreen/JavaStandaloneSDK.git'
+                        developerConnection 'scm:svn:ssh://github.com/sqreen/JavaStandaloneSDK.git'
+                        url 'https://github.com/sqreen/JavaStandaloneSDK'
+                    }
+
+                    licenses {
+                        license {
+                            name 'MIT License'
+                            url 'http://www.opensource.org/licenses/mit-license.php'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'glopes'
+                            name 'Gustavo A. S. Lopes'
+                            email 'gustavo@sqreen.com'
+                        }
+                        developer {
+                            id 'valentin.zakharov'
+                            name 'Valentin Zakharov'
+                            email 'valentin@sqreen.com'
+                        }
+                    }
+                }
+                pom.whenConfigured {
+                    it.dependencies = it.dependencies.findAll { d ->
+                        d.scope != 'test'
+                    }
+                }
+            }
+        }
+    }
+} else {
+    uploadArchives {
+        doFirst {
+            throw new GradleException(
+                    "Can't upload archives because OSSRH credentials are unavailable")
+        }
+    }
+}
+
+// vim: set et:

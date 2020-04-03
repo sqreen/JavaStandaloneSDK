@@ -23,9 +23,9 @@ steps:
     displayName: "Publish coverage (Azure)"
     inputs:
       codeCoverageTool: 'JaCoCo' # Options: cobertura, jaCoCo
-      summaryFileLocation: "$(System.DefaultWorkingDirectory)/sdk-standalone/build/reports/jacoco/test/jacocoTestReport.xml"
+      summaryFileLocation: "$(System.DefaultWorkingDirectory)/build/reports/jacoco/test/jacocoTestReport.xml"
       failIfCoverageEmpty: true
-      reportDirectory: "$(System.DefaultWorkingDirectory)/sdk-standalone/build/reports/jacoco/test/html/"
+      reportDirectory: "$(System.DefaultWorkingDirectory)/build/reports/jacoco/test/html/"
 
   - bash: >
       bash <(curl -s https://codecov.io/bash)

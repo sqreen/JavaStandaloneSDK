@@ -132,7 +132,7 @@ public class IngestionHttpClientBuilder {
          * @return <code>this</code>, for chaining
          */
         public BuildingHttpClient withReadTimeoutInMs(int timeout) {
-            readTimeout = readTimeout;
+            readTimeout = timeout;
             return this;
         }
 
@@ -194,7 +194,7 @@ public class IngestionHttpClientBuilder {
                         new HttpHost(proxy.getHost(), proxy.getPort(), proxy.getProtocol()));
             }
 
-            CloseableHttpClient client = HttpClientBuilder.create()
+            httpClient = HttpClientBuilder.create()
                     .setMaxConnPerRoute(MAX_CONCURRENT_CONN)
                     .setMaxConnTotal(MAX_CONCURRENT_CONN) // we only have one route
                     .setDefaultRequestConfig(requestConfig.build())
@@ -205,8 +205,6 @@ public class IngestionHttpClientBuilder {
                     // null to use JDK default SSL keystore, non-null to use our own embedded keystore
                     .setSSLSocketFactory(this.connectionSocketFactory)
                     .build();
-
-            httpClient = client;
 
             return new WithConfiguredHttpClient();
         }

@@ -9,12 +9,19 @@ import io.sqreen.sasdk.signals_dto.PointSignal
 import io.sqreen.sasdk.signals_dto.Trace
 import org.junit.Test
 
+import java.text.SimpleDateFormat
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*
 import static groovy.test.GroovyAssert.shouldFail
 
 class IngestionHttpClientTests implements WireMockTrait {
 
     String apiKey = 'api key'
+
+    def sdf = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').with {
+        timeZone = TimeZone.getTimeZone('UTC')
+        it
+    }
 
     @Lazy
     IngestionHttpClient.WithAuthentication service = new IngestionHttpClientBuilder()
@@ -62,7 +69,7 @@ class IngestionHttpClientTests implements WireMockTrait {
         def signal = new PointSignal(
                 name: 'signalName',
                 payloadSchema: 'mySchema',
-                time: new Date(2020 - 1900, 0, 1, 0, 0, 0),
+                time: sdf.parse('2020-01-01 00:00:00'),
                 actor: [ip: '127.0.0.1'],
                 location: [a: 'b'],
                 locationInfra: [c: 'd'],

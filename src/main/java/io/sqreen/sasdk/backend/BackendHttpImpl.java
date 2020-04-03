@@ -261,7 +261,7 @@ class BackendHttpImpl implements Closeable {
 
             try {
                 if (returnType == IgnoredResponse.class) {
-                    return (T) IgnoredResponse.INSTANCE;
+                    return returnType.cast(IgnoredResponse.INSTANCE);
                 }
                 return objectReader.forType(returnType).readValue(content);
             } finally {

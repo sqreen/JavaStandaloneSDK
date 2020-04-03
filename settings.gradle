@@ -1,6 +1,5 @@
 rootProject.name = 'sdk-standalone'
-rootProject.projectDir = new File(rootDir, 'sdk-standalone')
 
 include ':test-utils'
-project(':test-utils').projectDir = new File(rootDir, '../test-utils')
+project(':test-utils').projectDir = new File(rootDir, 'test-utils')
 

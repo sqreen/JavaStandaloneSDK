@@ -1,7 +1,7 @@
 package io.sqreen.sasdk.signals_dto;
 
 /**
- * A point signal is a signal with <code>type: metric</code>.
+ * A point signal is a signal with <code>type: point</code>.
  *
  * Points are, as of this point, used to report:
  * <ul>

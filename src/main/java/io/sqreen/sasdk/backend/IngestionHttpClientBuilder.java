@@ -1,7 +1,6 @@
 package io.sqreen.sasdk.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
@@ -53,12 +52,6 @@ public class IngestionHttpClientBuilder {
     private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
     private static final int DEFAULT_READ_TIMEOUT = 10000;
 
-    private LayeredConnectionSocketFactory connectionSocketFactory;
-
-    private ObjectReader objectReader;
-    private ObjectWriter objectWriter;
-    private IngestionErrorListener backendErrorListener;
-
     // 1. configure injection url (optional)
     private String url = DEFAULT_INJECTION_URL;
 
@@ -107,12 +100,11 @@ public class IngestionHttpClientBuilder {
         return new BuildingHttpClient();
     }
 
-    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
-    private int readTimeout = DEFAULT_READ_TIMEOUT;
-    private ProxyConfig proxy = ProxyConfig.DISABLED;
-
     public class BuildingHttpClient {
         private LayeredConnectionSocketFactory connectionSocketFactory;
+        private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+        private int readTimeout = DEFAULT_READ_TIMEOUT;
+        private ProxyConfig proxy = ProxyConfig.DISABLED;
 
         /**
          * Sets the maximum time for establishing connections with the

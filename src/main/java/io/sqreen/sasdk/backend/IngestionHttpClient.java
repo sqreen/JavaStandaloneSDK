@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import io.sqreen.sasdk.backend.exception.AuthenticationException;
 import io.sqreen.sasdk.backend.exception.BadHttpStatusException;
@@ -144,69 +145,96 @@ public final class IngestionHttpClient {
         void reportTrace(Object trace) throws IOException;
     }
 
-    static class IngestionHttpClientImpl
-            implements WithAuthentication, WithoutAuthentication {
 
-        private final String host;
-        private final BackendHttpImpl backendHttp;
-        private final AuthenticationConfig config;
+    static class IngestionHttpAuthClientImpl extends IngestionHttpClientImpl  implements WithAuthentication {
 
-        public IngestionHttpClientImpl(String host,
-                                       BackendHttpImpl backendHttp,
-                                       AuthenticationConfig config) {
-            checkNotNull(host);
-            checkNotNull(backendHttp);
-            this.host = host;
-            this.backendHttp = backendHttp;
+        protected final AuthenticationConfig config;
+        private Multimap<String, String> headers = ArrayListMultimap.create();
+
+        public IngestionHttpAuthClientImpl(String host,
+                                           BackendHttpImpl backendHttp,
+                                           AuthenticationConfig config) {
+            super(host, backendHttp);
             this.config = config != null ? config : AuthenticationConfig.EmptyConfig.INSTANCE;
+
+            Optional<String> sessionKey = this.config.getSessionKey();
+            if (sessionKey.isPresent()) {
+                this.headers.put("X-Session-Key", sessionKey.get());
+            } else {
+                Optional<String> apiKey = this.config.getAPIKey();
+                if (apiKey.isPresent()) {
+                    this.headers.put("X-API-Key", apiKey.get());
+                    Optional<String> appName = this.config.getAppName();
+                    if (appName.isPresent()) {
+                        this.headers.put("X-App-Name", appName.get());
+                    }
+                }
+            }
         }
 
         @Override
-        public void reportSignal(Object signal, Multimap<String, String> headers) throws IOException {
-            doIngestionRequestNoAuth("signals", signal, headers);
+        public void reportBatch(Collection<?> signalsAndTraces) throws IOException {
+            super.reportBatch(signalsAndTraces, headers);
         }
 
         @Override
         public void reportSignal(Object signal) throws IOException {
-            doIngestionRequestWithAuth("signals", signal);
-        }
-
-        @Override
-        public void reportTrace(Object trace, Multimap<String, String> headers) throws IOException {
-            doIngestionRequestNoAuth("traces", trace, headers);
+            super.reportSignal(signal, headers);
         }
 
         @Override
         public void reportTrace(Object trace) throws IOException {
-            doIngestionRequestWithAuth("traces", trace);
+            super.reportTrace(trace, headers);
         }
 
+        @Override
+        public String toString() {
+            return MoreObjects.toStringHelper(this)
+                    .add("host", host)
+                    .add("backendHttp", backendHttp)
+                    .add("config", config)
+                    .toString();
+        }
+    }
+
+
+    static class IngestionHttpClientImpl implements WithoutAuthentication {
+
+        protected final String host;
+        protected final BackendHttpImpl backendHttp;
+
+        public IngestionHttpClientImpl(String host,
+                                       BackendHttpImpl backendHttp) {
+            checkNotNull(host);
+            checkNotNull(backendHttp);
+            this.host = host;
+            this.backendHttp = backendHttp;
+        }
+
+        @Override
         public void reportBatch(Collection<?> signalsAndTraces, Multimap<String, String> headers) throws IOException {
-            doIngestionRequestNoAuth("batches", signalsAndTraces, headers);
+            doRequest("batches", signalsAndTraces, headers);
         }
 
-        public void reportBatch(Collection<?> batch) throws IOException {
-            doIngestionRequestWithAuth("batches", batch);
+        @Override
+        public void reportSignal(Object signal, Multimap<String, String> headers) throws IOException {
+            doRequest("signals", signal, headers);
         }
 
-        private void doIngestionRequestNoAuth(String path, Object payload,
-                                              Multimap<String, String> headers) throws IOException {
+        @Override
+        public void reportTrace(Object trace, Multimap<String, String> headers) throws IOException {
+            doRequest("traces", trace, headers);
+        }
+
+        private void doRequest(String path, Object payload,
+                               Multimap<String, String> headers) throws IOException {
             BackendHttpImpl.RequestBuilder reqBuilder = this.backendHttp.newRequest(
                     BackendHttpImpl.HttpMethod.POST, this.host, path);
 
-            BackendResponse<BackendHttpImpl.IgnoredResponse> result = commonReqSetup(reqBuilder)
+            BackendResponse<BackendHttpImpl.IgnoredResponse> result = reqBuilder
+                    .header("Content-Type", "application/json")
+                    .compression(false)
                     .headers(headers)
-                    .payload(payload)
-                    .execute(BackendHttpImpl.IgnoredResponse.class);
-
-            handleErrors(result);
-        }
-
-        private void doIngestionRequestWithAuth(String path, Object payload) throws IOException {
-            BackendHttpImpl.RequestBuilder reqBuilder = this.backendHttp.newRequest(
-                    BackendHttpImpl.HttpMethod.POST, this.host, path);
-
-            BackendResponse<BackendHttpImpl.IgnoredResponse> result = commonReqSetupWithAuth(reqBuilder)
                     .payload(payload)
                     .execute(BackendHttpImpl.IgnoredResponse.class);
 
@@ -222,34 +250,6 @@ public final class IngestionHttpClient {
             }
         }
 
-        private BackendHttpImpl.RequestBuilder commonReqSetup(BackendHttpImpl.RequestBuilder reqBuilder) {
-            return reqBuilder
-                    .header("Content-Type", "application/json")
-                    .compression(false);
-        }
-
-        private BackendHttpImpl.RequestBuilder commonReqSetupWithAuth(BackendHttpImpl.RequestBuilder reqBuilder) {
-            return addAuthenticationHeaders(commonReqSetup(reqBuilder));
-        }
-
-        private BackendHttpImpl.RequestBuilder addAuthenticationHeaders(BackendHttpImpl.RequestBuilder reqBuilder) {
-            Optional<String> sessionKey = this.config.getSessionKey();
-            if (sessionKey.isPresent()) {
-                reqBuilder.header("X-Session-Key", sessionKey.get());
-            } else {
-                Optional<String> apiKey = this.config.getAPIKey();
-                if (apiKey.isPresent()) {
-                    reqBuilder.header("X-API-Key", apiKey.get());
-                    Optional<String> appName = this.config.getAppName();
-                    if (appName.isPresent()) {
-                        reqBuilder.header("X-App-Name", appName.get());
-                    }
-                }
-            }
-
-            return reqBuilder;
-        }
-
         @Override
         public void close() throws IOException {
             this.backendHttp.close();
@@ -260,7 +260,6 @@ public final class IngestionHttpClient {
             return MoreObjects.toStringHelper(this)
                     .add("host", host)
                     .add("backendHttp", backendHttp)
-                    .add("config", config)
                     .toString();
         }
     }

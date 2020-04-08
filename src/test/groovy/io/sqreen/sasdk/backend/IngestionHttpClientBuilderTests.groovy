@@ -32,7 +32,6 @@ class IngestionHttpClientBuilderTests {
         // test only a bit of internals
         // testing that the remaining configuration is applied is done elsewhere
         assertThat service.host, is("https://example.com/")
-        assertThat service.config, is(AuthenticationConfig.EmptyConfig.INSTANCE)
     }
 
     @Test

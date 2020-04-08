@@ -53,12 +53,6 @@ public class IngestionHttpClientBuilder {
     private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
     private static final int DEFAULT_READ_TIMEOUT = 10000;
 
-    private LayeredConnectionSocketFactory connectionSocketFactory;
-
-    private ObjectReader objectReader;
-    private ObjectWriter objectWriter;
-    private IngestionErrorListener backendErrorListener;
-
     // 1. configure injection url (optional)
     private String url = DEFAULT_INJECTION_URL;
 
@@ -282,7 +276,9 @@ public class IngestionHttpClientBuilder {
          * @return the client with no automatic authentication
          */
         public IngestionHttpClient.WithoutAuthentication createWithoutAuthentication() {
-            return createCommon();
+            return new IngestionHttpClient.IngestionHttpClientImpl(
+                    url,
+                    createBackendHttpImpl());
         }
 
         /**
@@ -295,8 +291,10 @@ public class IngestionHttpClientBuilder {
          */
         public IngestionHttpClient.WithAuthentication createWithAuthentication(
                 AuthenticationConfig authenticationConfig) {
-            this.authenticationConfig = authenticationConfig;
-            return createCommon();
+            return new IngestionHttpClient.IngestionHttpAuthClientImpl(
+                    url,
+                    createBackendHttpImpl(),
+                    authenticationConfig);
         }
 
         private String getAgentApiKey() {
@@ -326,13 +324,6 @@ public class IngestionHttpClientBuilder {
         public IngestionHttpClient.WithAuthentication createWithAgentAuthentication() {
             return createWithAuthentication(authConfigWithAPIKey(
                     getAgentApiKey(), getAgentAppName()));
-        }
-
-        private IngestionHttpClient.IngestionHttpClientImpl createCommon() {
-            return new IngestionHttpClient.IngestionHttpClientImpl(
-                    url,
-                    createBackendHttpImpl(),
-                    this.authenticationConfig);
         }
     }
 

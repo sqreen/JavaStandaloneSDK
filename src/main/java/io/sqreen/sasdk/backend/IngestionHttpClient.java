@@ -146,15 +146,16 @@ public final class IngestionHttpClient {
     }
 
 
-    static class IngestionHttpAuthClientImpl extends IngestionHttpClientImpl  implements WithAuthentication {
+    static class IngestionHttpAuthClientImpl implements WithAuthentication {
 
         protected final AuthenticationConfig config;
-        private Multimap<String, String> headers = ArrayListMultimap.create();
+        private final Multimap<String, String> headers = ArrayListMultimap.create();
+        private final WithoutAuthentication client;
 
         public IngestionHttpAuthClientImpl(String host,
                                            BackendHttpImpl backendHttp,
                                            AuthenticationConfig config) {
-            super(host, backendHttp);
+            client = new IngestionHttpClientImpl(host, backendHttp);
             this.config = config != null ? config : AuthenticationConfig.EmptyConfig.INSTANCE;
 
             Optional<String> sessionKey = this.config.getSessionKey();
@@ -174,26 +175,31 @@ public final class IngestionHttpClient {
 
         @Override
         public void reportBatch(Collection<?> signalsAndTraces) throws IOException {
-            super.reportBatch(signalsAndTraces, headers);
+            client.reportBatch(signalsAndTraces, headers);
         }
 
         @Override
         public void reportSignal(Object signal) throws IOException {
-            super.reportSignal(signal, headers);
+            client.reportSignal(signal, headers);
         }
 
         @Override
         public void reportTrace(Object trace) throws IOException {
-            super.reportTrace(trace, headers);
+            client.reportTrace(trace, headers);
         }
 
         @Override
         public String toString() {
             return MoreObjects.toStringHelper(this)
-                    .add("host", host)
-                    .add("backendHttp", backendHttp)
+                    //.add("host", host)
+                    //.add("backendHttp", backendHttp)
                     .add("config", config)
                     .toString();
+        }
+
+        @Override
+        public void close() throws IOException {
+            client.close();
         }
     }
 

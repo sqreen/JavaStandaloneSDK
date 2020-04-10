@@ -1,5 +1,7 @@
 package io.sqreen.sasdk.backend
 
+import io.sqreen.sasdk.signals_dto.PointSignal
+import io.sqreen.sasdk.signals_dto.Signal
 import org.gmock.WithGMock
 import org.junit.After
 import org.junit.Before
@@ -40,7 +42,7 @@ class BatchCollectorTests {
             mock(IngestionHttpClient.WithAuthentication)
 
     IngestionHttpClient.WithAuthentication client = [
-            reportBatch: { Collection<?> signalsAndTraces ->
+            reportBatch: { Collection<Signal> signalsAndTraces ->
                 try {
                     mockClient.reportBatch(signalsAndTraces)
                 } catch (Throwable e) {
@@ -79,11 +81,11 @@ class BatchCollectorTests {
 
     @Test
     void 'submits the batch when trigger size is reached'() {
-        mockClient.reportBatch(hasSize(3))
+            mockClient.reportBatch(hasSize(3))
 
         play {
             4.times {
-                testee.add "object ${it + 1}"
+                testee.add new PointSignal()
             }
             await()
         }
@@ -98,7 +100,7 @@ class BatchCollectorTests {
         testee // for side effect
         sleep 200
         play {
-            testee.add 'object'
+            testee.add new PointSignal()
             testee.forceReport()
         }
 
@@ -112,7 +114,7 @@ class BatchCollectorTests {
         mockClient.reportBatch(hasSize(2))
 
         play {
-            2.times { testee.add "object ${it + 1}" }
+            2.times { testee.add new PointSignal() }
             await 150 // 100 ms plus some margin
         }
     }
@@ -126,7 +128,7 @@ class BatchCollectorTests {
 
         play {
             sleep 100
-            2.times { testee.add "object ${it + 1}" }
+            2.times { testee.add new PointSignal() }
             await()
         }
 
@@ -149,7 +151,7 @@ class BatchCollectorTests {
         maxConcurrentRequests = 0
 
         play {
-            testee.add 'object 1'
+            testee.add new PointSignal()
             sleep 120
         }
 
@@ -161,7 +163,7 @@ class BatchCollectorTests {
         def waitBarrier = new CountDownLatch(1)
         def submissionDoneLatch = new CountDownLatch(2)
         client = [
-                reportBatch: { Collection<?> signalsAndTraces ->
+                reportBatch: { Collection<Signal> signalsAndTraces ->
                     waitBarrier.await(5, TimeUnit.SECONDS)
                     try {
                         mockClient.reportBatch(signalsAndTraces)
@@ -182,9 +184,9 @@ class BatchCollectorTests {
 
         play {
             10.times { // 3 + 3 + 4
-                assertThat testee.add("object ${it + 1}"), is(true)
+                assertThat testee.add(new PointSignal()), is(true)
             }
-            assertThat testee.add('object 11'), is(false)
+            assertThat testee.add(new PointSignal()), is(false)
             waitBarrier.countDown()
             await(500, submissionDoneLatch) // wait for the two calls
 
@@ -193,7 +195,7 @@ class BatchCollectorTests {
 
             int i = 0
             for (; i < 5; i++) {
-                if (testee.add('object 12')) {
+                if (testee.add(new PointSignal())) {
                     break
                 }
                 sleep 25
@@ -209,7 +211,7 @@ class BatchCollectorTests {
     void 'throws if already closed'() {
         testee.close()
         try {
-            testee.add(new Object())
+            testee.add(new PointSignal())
         } finally {
             doNotClose = true
         }

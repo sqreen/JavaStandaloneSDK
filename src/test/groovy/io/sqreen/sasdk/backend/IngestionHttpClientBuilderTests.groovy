@@ -10,7 +10,8 @@ import javax.net.ssl.SSLContext
 
 import static groovy.test.GroovyAssert.shouldFail
 import static org.hamcrest.MatcherAssert.assertThat
-import static org.hamcrest.Matchers.is
+import static org.hamcrest.Matchers.*
+
 
 @WithGMock
 class IngestionHttpClientBuilderTests {
@@ -43,9 +44,8 @@ class IngestionHttpClientBuilderTests {
                 .createWithAuthentication(
                         IngestionHttpClientBuilder.authConfigWithAPIKey("apiKey", "appName"))
 
-        //assertThat service.host, is('https://ingestion.sqreen.com/')
-        assertThat service.config.APIKey.get(), is("apiKey")
-        assertThat service.config.appName.get(), is("appName")
+        assertThat service.config.props.get("X-API-Key"), contains("apiKey")
+        assertThat service.config.props.get("X-App-Name"), contains("appName")
     }
 
     @Test
@@ -56,7 +56,7 @@ class IngestionHttpClientBuilderTests {
                 .createWithAuthentication(
                         IngestionHttpClientBuilder.authConfigWithSessionKey("session key"))
 
-        assertThat service.config.sessionKey.get(), is('session key')
+        assertThat service.config.props.get("X-Session-Key"), contains('session key')
     }
 
     @Test

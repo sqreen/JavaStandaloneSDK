@@ -1,11 +1,9 @@
 package io.sqreen.sasdk.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
-import com.google.common.base.Optional;
 import io.sqreen.sasdk.signals_dto.MetricSignal;
 import io.sqreen.sasdk.signals_dto.PointSignal;
 import io.sqreen.sasdk.signals_dto.Trace;
@@ -207,7 +205,6 @@ public class IngestionHttpClientBuilder {
     public class WithConfiguredHttpClient {
         private ObjectWriter objectWriter;
         private IngestionErrorListener errorListener;
-        private AuthenticationConfig authenticationConfig;
 
         /**
          * Specifies a callback that will be invoked when an error occurs during
@@ -290,11 +287,11 @@ public class IngestionHttpClientBuilder {
          * @return the client with automatic authentication
          */
         public IngestionHttpClient.WithAuthentication createWithAuthentication(
-                AuthenticationConfig authenticationConfig) {
+                AuthConfig authConfig) {
             return new IngestionHttpClient.IngestionHttpAuthClientImpl(
                     url,
                     createBackendHttpImpl(),
-                    authenticationConfig);
+                    authConfig);
         }
 
         private String getAgentApiKey() {
@@ -334,13 +331,10 @@ public class IngestionHttpClientBuilder {
      *
      * @param sessionKey the session id identifying the instance
      * @return a configuration object to pass to
-     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthenticationConfig)}
+     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthConfig)}
      */
-    public static AuthenticationConfig authConfigWithSessionKey(String sessionKey) {
-        ExplicitAuthenticationConfig config =
-                new ExplicitAuthenticationConfig();
-        config.sessionKey = sessionKey;
-        return config;
+    public static AuthConfig authConfigWithSessionKey(String sessionKey) {
+        return AuthConfig.createSessionKeyAuthConfig(sessionKey);
     }
 
     /**
@@ -348,11 +342,11 @@ public class IngestionHttpClientBuilder {
      * the keys that do not start with <tt>org_</tt>.
      * @param apiKey the legacy (per-app) API key. Cannot be null
      * @return a configuration object to pass to
-     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthenticationConfig)}
+     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthConfig)}
      * @see #authConfigWithAPIKey(String, String)
      */
-    public static AuthenticationConfig authConfigWithAPIKey(String apiKey) {
-        return authConfigWithAPIKey(apiKey, null);
+    public static AuthConfig authConfigWithAPIKey(String apiKey) {
+        return AuthConfig.createApiKeyAuthConfig(apiKey);
     }
 
     /**
@@ -364,35 +358,10 @@ public class IngestionHttpClientBuilder {
      * @param apiKey the organization key. Cannot be null
      * @param appName the app name
      * @return a configuration object to pass to
-     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthenticationConfig)}
+     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthConfig)}
      */
-    public static AuthenticationConfig authConfigWithAPIKey(String apiKey, String appName) {
-        ExplicitAuthenticationConfig config =
-                new ExplicitAuthenticationConfig();
-        config.apiKey = apiKey;
-        config.appName = appName;
-        return config;
-    }
-
-    private static class ExplicitAuthenticationConfig implements AuthenticationConfig {
-        public String apiKey;
-        public String appName;
-        public String sessionKey;
-
-        @Override
-        public Optional<String> getAPIKey() {
-            return Optional.fromNullable(this.apiKey);
-        }
-
-        @Override
-        public Optional<String> getAppName() {
-            return Optional.fromNullable(this.appName);
-        }
-
-        @Override
-        public Optional<String> getSessionKey() {
-            return Optional.fromNullable(this.sessionKey);
-        }
+    public static AuthConfig authConfigWithAPIKey(String apiKey, String appName) {
+        return AuthConfig.createApiKeyAuthConfig(apiKey, appName);
     }
 
     public static class ProxyConfig {

@@ -2,9 +2,7 @@ package io.sqreen.sasdk.backend;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import io.sqreen.sasdk.backend.exception.AuthenticationException;
 import io.sqreen.sasdk.backend.exception.BadHttpStatusException;
@@ -148,52 +146,36 @@ public final class IngestionHttpClient {
 
     static class IngestionHttpAuthClientImpl implements WithAuthentication {
 
-        protected final AuthenticationConfig config;
-        private final Multimap<String, String> headers = ArrayListMultimap.create();
+        protected final AuthConfig config;
         private final WithoutAuthentication client;
 
         public IngestionHttpAuthClientImpl(String host,
                                            BackendHttpImpl backendHttp,
-                                           AuthenticationConfig config) {
+                                           AuthConfig config) {
             client = new IngestionHttpClientImpl(host, backendHttp);
-            this.config = config != null ? config : AuthenticationConfig.EmptyConfig.INSTANCE;
-
-            Optional<String> sessionKey = this.config.getSessionKey();
-            if (sessionKey.isPresent()) {
-                this.headers.put("X-Session-Key", sessionKey.get());
-            } else {
-                Optional<String> apiKey = this.config.getAPIKey();
-                if (apiKey.isPresent()) {
-                    this.headers.put("X-API-Key", apiKey.get());
-                    Optional<String> appName = this.config.getAppName();
-                    if (appName.isPresent()) {
-                        this.headers.put("X-App-Name", appName.get());
-                    }
-                }
-            }
+            this.config = config;
         }
 
         @Override
         public void reportBatch(Collection<?> signalsAndTraces) throws IOException {
-            client.reportBatch(signalsAndTraces, headers);
+            client.reportBatch(signalsAndTraces, config.getAllProps());
         }
 
         @Override
         public void reportSignal(Object signal) throws IOException {
-            client.reportSignal(signal, headers);
+            client.reportSignal(signal, config.getAllProps());
         }
 
         @Override
         public void reportTrace(Object trace) throws IOException {
-            client.reportTrace(trace, headers);
+            client.reportTrace(trace, config.getAllProps());
         }
 
         @Override
         public String toString() {
             return MoreObjects.toStringHelper(this)
-                    //.add("host", host)
-                    //.add("backendHttp", backendHttp)
                     .add("config", config)
+                    .add("client", client)
                     .toString();
         }
 

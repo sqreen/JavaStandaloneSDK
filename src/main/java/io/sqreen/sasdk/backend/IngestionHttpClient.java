@@ -44,7 +44,7 @@ public final class IngestionHttpClient {
          * {@link AuthenticationException}, {@link BadHttpStatusException} and
          * {@link InvalidPayloadException}.
          */
-        void reportBatch(Collection<Signal> signalsAndTraces, Multimap<String, String> headers) throws IOException;
+        void reportBatch(Collection<?> signalsAndTraces, Multimap<String, String> headers) throws IOException;
 
         /**
          * Submits a single signal object. A signal object represents an
@@ -63,7 +63,7 @@ public final class IngestionHttpClient {
          * {@link AuthenticationException}, {@link BadHttpStatusException} and
          * {@link InvalidPayloadException}.
          */
-        void reportSignal(Signal signal, Multimap<String, String> headers) throws IOException;
+        void reportSignal(Object signal, Multimap<String, String> headers) throws IOException;
 
         /**
          * Submits a single trace object. A trace object is a set of signals
@@ -81,7 +81,7 @@ public final class IngestionHttpClient {
          * {@link AuthenticationException}, {@link BadHttpStatusException} and
          * {@link InvalidPayloadException}.
          */
-        void reportTrace(Trace trace, Multimap<String, String> headers) throws IOException;
+        void reportTrace(Object trace, Multimap<String, String> headers) throws IOException;
     }
 
     /**
@@ -198,17 +198,17 @@ public final class IngestionHttpClient {
         }
 
         @Override
-        public void reportBatch(Collection<Signal> signalsAndTraces, Multimap<String, String> headers) throws IOException {
+        public void reportBatch(Collection<?> signalsAndTraces, Multimap<String, String> headers) throws IOException {
             doRequest("batches", signalsAndTraces, headers);
         }
 
         @Override
-        public void reportSignal(Signal signal, Multimap<String, String> headers) throws IOException {
+        public void reportSignal(Object signal, Multimap<String, String> headers) throws IOException {
             doRequest("signals", signal, headers);
         }
 
         @Override
-        public void reportTrace(Trace trace, Multimap<String, String> headers) throws IOException {
+        public void reportTrace(Object trace, Multimap<String, String> headers) throws IOException {
             doRequest("traces", trace, headers);
         }
 

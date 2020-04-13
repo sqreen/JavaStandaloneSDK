@@ -33,7 +33,7 @@ public class Trace extends Signal {
         return null;
     }
 
-    private Collection<Object> nestedSignals;
+    private Collection<Signal> nestedSignals;
 
     /**
      * Adds a signal to this trace's collection.
@@ -48,7 +48,7 @@ public class Trace extends Signal {
      *
      * @param signal the signal to add
      */
-    public synchronized void addSignal(Object signal) {
+    public synchronized void addSignal(Signal signal) {
         if (this.nestedSignals == null) {
             this.nestedSignals = Lists.newArrayList();
         }
@@ -57,15 +57,15 @@ public class Trace extends Signal {
     }
 
     /**
-     * Returns the signals added to this trace with {@link #addSignal(Object)}.
+     * Returns the signals added to this trace with {@link #addSignal(Signal)}.
      *
      * Required with at least size 1.
      *
      * @return a non-null collection.
      */
     @JsonProperty("data")
-    public synchronized Collection<Object> getSignals() {
+    public synchronized Collection<Signal> getSignals() {
         return this.nestedSignals == null ?
-                ImmutableList.of() : this.nestedSignals;
+                ImmutableList.<Signal>of() : this.nestedSignals;
     }
 }

@@ -31,7 +31,7 @@ public class BatchCollector implements Closeable {
     private static final AtomicInteger THREAD_SERIAL = new AtomicInteger();
 
     private final ScheduledReportRunnable reportRunnable = new ScheduledReportRunnable();
-    private final BlockingDeque<Signal> queue = new LinkedBlockingDeque<>();
+    private final BlockingDeque<Signal> queue = new LinkedBlockingDeque<Signal>();
 
     // guarded by this; never null
     // rescheduled: 1) on construction 2) when there's a submission 3) when the timer expires

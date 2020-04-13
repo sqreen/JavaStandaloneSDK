@@ -85,7 +85,7 @@ class BatchCollectorTests {
 
         play {
             4.times {
-                testee.add new PointSignal()
+                testee.add new PointSignal(name: '${it + 1}')
             }
             await()
         }
@@ -114,7 +114,7 @@ class BatchCollectorTests {
         mockClient.reportBatch(hasSize(2))
 
         play {
-            2.times { testee.add new PointSignal() }
+            2.times { testee.add new PointSignal(name: '${it + 1}') }
             await 150 // 100 ms plus some margin
         }
     }
@@ -128,7 +128,7 @@ class BatchCollectorTests {
 
         play {
             sleep 100
-            2.times { testee.add new PointSignal() }
+            2.times { testee.add new PointSignal(name: '${it + 1}') }
             await()
         }
 
@@ -151,7 +151,7 @@ class BatchCollectorTests {
         maxConcurrentRequests = 0
 
         play {
-            testee.add new PointSignal()
+            testee.add new PointSignal(name: '1')
             sleep 120
         }
 
@@ -184,9 +184,9 @@ class BatchCollectorTests {
 
         play {
             10.times { // 3 + 3 + 4
-                assertThat testee.add(new PointSignal()), is(true)
+                assertThat testee.add(new PointSignal(name: '${it + 1}')), is(true)
             }
-            assertThat testee.add(new PointSignal()), is(false)
+            assertThat testee.add(new PointSignal(name: '11')), is(false)
             waitBarrier.countDown()
             await(500, submissionDoneLatch) // wait for the two calls
 
@@ -195,7 +195,7 @@ class BatchCollectorTests {
 
             int i = 0
             for (; i < 5; i++) {
-                if (testee.add(new PointSignal())) {
+                if (testee.add(new PointSignal(name: '12'))) {
                     break
                 }
                 sleep 25

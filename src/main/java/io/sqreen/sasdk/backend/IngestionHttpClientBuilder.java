@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.google.common.base.Optional;
 import io.sqreen.sasdk.signals_dto.MetricSignal;
 import io.sqreen.sasdk.signals_dto.PointSignal;
 import io.sqreen.sasdk.signals_dto.Trace;
@@ -334,7 +335,10 @@ public class IngestionHttpClientBuilder {
      *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthConfig)}
      */
     public static AuthConfig authConfigWithSessionKey(String sessionKey) {
-        return AuthConfig.createSessionKeyAuthConfig(sessionKey);
+        ExplicitAuthenticationConfig config =
+                new ExplicitAuthenticationConfig();
+        config.sessionKey = sessionKey;
+        return config;
     }
 
     /**
@@ -346,7 +350,7 @@ public class IngestionHttpClientBuilder {
      * @see #authConfigWithAPIKey(String, String)
      */
     public static AuthConfig authConfigWithAPIKey(String apiKey) {
-        return AuthConfig.createApiKeyAuthConfig(apiKey);
+        return authConfigWithAPIKey(apiKey, null);
     }
 
     /**
@@ -361,7 +365,32 @@ public class IngestionHttpClientBuilder {
      *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthConfig)}
      */
     public static AuthConfig authConfigWithAPIKey(String apiKey, String appName) {
-        return AuthConfig.createApiKeyAuthConfig(apiKey, appName);
+        ExplicitAuthenticationConfig config =
+                new ExplicitAuthenticationConfig();
+        config.apiKey = apiKey;
+        config.appName = appName;
+        return config;
+    }
+
+    private static class ExplicitAuthenticationConfig implements AuthConfig {
+        public String apiKey;
+        public String appName;
+        public String sessionKey;
+
+        @Override
+        public Optional<String> getAPIKey() {
+            return Optional.fromNullable(this.apiKey);
+        }
+
+        @Override
+        public Optional<String> getAppName() {
+            return Optional.fromNullable(this.appName);
+        }
+
+        @Override
+        public Optional<String> getSessionKey() {
+            return Optional.fromNullable(this.sessionKey);
+        }
     }
 
     public static class ProxyConfig {

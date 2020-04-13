@@ -2,7 +2,9 @@ package io.sqreen.sasdk.backend;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import io.sqreen.sasdk.backend.exception.AuthenticationException;
 import io.sqreen.sasdk.backend.exception.BadHttpStatusException;
@@ -146,27 +148,45 @@ public final class IngestionHttpClient {
 
         protected final AuthConfig config;
         private final WithoutAuthentication client;
+        private final ImmutableMultimap<String, String> headers;
 
         public IngestionHttpAuthClientImpl(String host,
                                            BackendHttpImpl backendHttp,
                                            AuthConfig config) {
             client = new IngestionHttpClientImpl(host, backendHttp);
             this.config = config;
+
+            ImmutableMultimap.Builder<String, String> builder = ImmutableMultimap.builder();
+
+            Optional<String> sessionKey = this.config.getSessionKey();
+            if (sessionKey.isPresent()) {
+                builder.put("X-Session-Key", sessionKey.get());
+            } else {
+                Optional<String> apiKey = this.config.getAPIKey();
+                if (apiKey.isPresent()) {
+                    builder.put("X-API-Key", apiKey.get());
+                    Optional<String> appName = this.config.getAppName();
+                    if (appName.isPresent()) {
+                        builder.put("X-App-Name", appName.get());
+                    }
+                }
+            }
+            this.headers = builder.build();
         }
 
         @Override
         public void reportBatch(Collection<Signal> signalsAndTraces) throws IOException {
-            client.reportBatch(signalsAndTraces, config.getAllProps());
+            client.reportBatch(signalsAndTraces, headers);
         }
 
         @Override
         public void reportSignal(Signal signal) throws IOException {
-            client.reportSignal(signal, config.getAllProps());
+            client.reportSignal(signal, headers);
         }
 
         @Override
         public void reportTrace(Trace trace) throws IOException {
-            client.reportTrace(trace, config.getAllProps());
+            client.reportTrace(trace, headers);
         }
 
         @Override

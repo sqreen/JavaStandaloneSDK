@@ -44,8 +44,8 @@ class IngestionHttpClientBuilderTests {
                 .createWithAuthentication(
                         IngestionHttpClientBuilder.authConfigWithAPIKey("apiKey", "appName"))
 
-        assertThat service.config.APIKey.get(), is("apiKey")
-        assertThat service.config.appName.get(), is("appName")
+        assertThat service.auth.apiKey, is("apiKey")
+        assertThat service.auth.appName, is("appName")
     }
 
     @Test
@@ -56,7 +56,7 @@ class IngestionHttpClientBuilderTests {
                 .createWithAuthentication(
                         IngestionHttpClientBuilder.authConfigWithSessionKey("session key"))
 
-        assertThat service.config.sessionKey.get(), is('session key')
+        assertThat service.auth.sessionKey, is('session key')
     }
 
     @Test

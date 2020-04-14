@@ -178,38 +178,40 @@ class BackendHttpImpl implements Closeable {
             }
             return response;
         }
+
+        public HttpUriRequest build() throws IOException {
+            HttpUriRequest request;
+            String url = this.host + this.path;
+            switch (this.method) {
+                case GET:
+                    request = new HttpGet(url);
+                    break;
+                case POST:
+                    HttpPost httpPost = new HttpPost(url);
+                    httpPost.setHeader("Content-Type", "application/json");
+                    if (this.compression) {
+                        httpPost.setHeader("Content-Encoding", "gzip");
+                    }
+                    writeRequestBody(this.payload, this.compression, httpPost);
+                    request = httpPost;
+                    break;
+                default:
+                    throw new IllegalArgumentException("unsupported HTTP method " + this.method);
+            }
+
+            for (Map.Entry<String, String> h : this.headers.entries()) {
+                request.addHeader(h.getKey(), h.getValue());
+            }
+            return request;
+        }
     }
 
-    private static String getBackendUrl(String backendUrl, String path) {
-        return backendUrl + path;
-    }
 
     private <T> T doRequest(RequestBuilder r, Class<T> returnType) throws IOException {
         logger.debug("Backend {} request to {} {} with payload {}",
                 r.method, r.host, r.path, r.payload);
 
-        HttpUriRequest request;
-        String url = getBackendUrl(r.host, r.path);
-        switch (r.method) {
-            case GET:
-                request = new HttpGet(url);
-                break;
-            case POST:
-                HttpPost httpPost = new HttpPost(url);
-                httpPost.setHeader("Content-Type", "application/json");
-                if (r.compression) {
-                    httpPost.setHeader("Content-Encoding", "gzip");
-                }
-                writeRequestBody(r.payload, r.compression, httpPost);
-                request = httpPost;
-                break;
-            default:
-                throw new IllegalArgumentException("unsupported HTTP method " + r.method);
-        }
-
-        for (Map.Entry<String, String> h : r.headers.entries()) {
-            request.addHeader(h.getKey(), h.getValue());
-        }
+        HttpUriRequest request = r.build();
 
         CloseableHttpResponse response;
         try {

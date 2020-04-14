@@ -8,7 +8,7 @@ public interface IngestionErrorListener {
     void onError(String path, Exception e);
 
     final class NoActionIngestionErrorListener implements IngestionErrorListener {
-        public final static IngestionErrorListener INSTANCE = new NoActionIngestionErrorListener();
+        public static final IngestionErrorListener INSTANCE = new NoActionIngestionErrorListener();
 
         private NoActionIngestionErrorListener() {}
 
@@ -19,7 +19,7 @@ public interface IngestionErrorListener {
     }
 
     final class LoggingIngestionErrorListener implements IngestionErrorListener {
-        public final static IngestionErrorListener INSTANCE = new LoggingIngestionErrorListener();
+        public static final IngestionErrorListener INSTANCE = new LoggingIngestionErrorListener();
 
         private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -27,7 +27,7 @@ public interface IngestionErrorListener {
 
         @Override
         public void onError(String path, Exception e) {
-            this.logger.warn("Error on " + path, e);
+            this.logger.warn("Error on {}", path, e);
         }
     }
 }

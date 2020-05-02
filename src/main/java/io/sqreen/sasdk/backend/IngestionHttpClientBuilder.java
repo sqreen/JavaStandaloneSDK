@@ -99,12 +99,11 @@ public class IngestionHttpClientBuilder {
         return new BuildingHttpClient();
     }
 
-    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
-    private int readTimeout = DEFAULT_READ_TIMEOUT;
-    private ProxyConfig proxy = ProxyConfig.DISABLED;
-
     public class BuildingHttpClient {
         private LayeredConnectionSocketFactory connectionSocketFactory;
+        private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+        private int readTimeout = DEFAULT_READ_TIMEOUT;
+        private ProxyConfig proxy = ProxyConfig.DISABLED;
 
         /**
          * Sets the maximum time for establishing connections with the

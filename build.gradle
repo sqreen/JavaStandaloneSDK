@@ -120,7 +120,7 @@ if (doingSigs && ossrhUsername && ossrhPassword) {
 
                 pom.project {
                     name 'Sqreen Java Standalone SDK'
-                    artifactId 'sdk-standalone'
+                    artifactId 'sqreen-sdk-standalone'
                     packaging 'jar'
                     url 'https://github.com/sqreen/JavaStandaloneSDK'
 

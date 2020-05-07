@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
-import com.google.common.base.Optional;
 import io.sqreen.sasdk.signals_dto.MetricSignal;
 import io.sqreen.sasdk.signals_dto.PointSignal;
 import io.sqreen.sasdk.signals_dto.Trace;
@@ -205,7 +204,6 @@ public class IngestionHttpClientBuilder {
     public class WithConfiguredHttpClient {
         private ObjectWriter objectWriter;
         private IngestionErrorListener errorListener;
-        private AuthenticationConfig authenticationConfig;
 
         /**
          * Specifies a callback that will be invoked when an error occurs during
@@ -274,7 +272,9 @@ public class IngestionHttpClientBuilder {
          * @return the client with no automatic authentication
          */
         public IngestionHttpClient.WithoutAuthentication createWithoutAuthentication() {
-            return createCommon();
+            return new IngestionHttpClient.IngestionHttpClientImpl(
+                    url,
+                    createBackendHttpImpl());
         }
 
         /**
@@ -286,9 +286,11 @@ public class IngestionHttpClientBuilder {
          * @return the client with automatic authentication
          */
         public IngestionHttpClient.WithAuthentication createWithAuthentication(
-                AuthenticationConfig authenticationConfig) {
-            this.authenticationConfig = authenticationConfig;
-            return createCommon();
+                AuthHeadersProvider authHeadersProvider) {
+            return new IngestionHttpClient.IngestionHttpAuthClientImpl(
+                    url,
+                    createBackendHttpImpl(),
+                    authHeadersProvider);
         }
 
         private String getAgentApiKey() {
@@ -319,13 +321,6 @@ public class IngestionHttpClientBuilder {
             return createWithAuthentication(authConfigWithAPIKey(
                     getAgentApiKey(), getAgentAppName()));
         }
-
-        private IngestionHttpClient.IngestionHttpClientImpl createCommon() {
-            return new IngestionHttpClient.IngestionHttpClientImpl(
-                    url,
-                    createBackendHttpImpl(),
-                    this.authenticationConfig);
-        }
     }
 
     /**
@@ -335,13 +330,10 @@ public class IngestionHttpClientBuilder {
      *
      * @param sessionKey the session id identifying the instance
      * @return a configuration object to pass to
-     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthenticationConfig)}
+     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthHeadersProvider)}
      */
-    public static AuthenticationConfig authConfigWithSessionKey(String sessionKey) {
-        ExplicitAuthenticationConfig config =
-                new ExplicitAuthenticationConfig();
-        config.sessionKey = sessionKey;
-        return config;
+    public static AuthHeadersProvider authConfigWithSessionKey(String sessionKey) {
+        return new AuthHeadersProvider.Session(sessionKey);
     }
 
     /**
@@ -349,11 +341,11 @@ public class IngestionHttpClientBuilder {
      * the keys that do not start with <tt>org_</tt>.
      * @param apiKey the legacy (per-app) API key. Cannot be null
      * @return a configuration object to pass to
-     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthenticationConfig)}
+     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthHeadersProvider)}
      * @see #authConfigWithAPIKey(String, String)
      */
-    public static AuthenticationConfig authConfigWithAPIKey(String apiKey) {
-        return authConfigWithAPIKey(apiKey, null);
+    public static AuthHeadersProvider authConfigWithAPIKey(String apiKey) {
+        return new AuthHeadersProvider.Api(apiKey);
     }
 
     /**
@@ -365,35 +357,10 @@ public class IngestionHttpClientBuilder {
      * @param apiKey the organization key. Cannot be null
      * @param appName the app name
      * @return a configuration object to pass to
-     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthenticationConfig)}
+     *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthHeadersProvider)}
      */
-    public static AuthenticationConfig authConfigWithAPIKey(String apiKey, String appName) {
-        ExplicitAuthenticationConfig config =
-                new ExplicitAuthenticationConfig();
-        config.apiKey = apiKey;
-        config.appName = appName;
-        return config;
-    }
-
-    private static class ExplicitAuthenticationConfig implements AuthenticationConfig {
-        public String apiKey;
-        public String appName;
-        public String sessionKey;
-
-        @Override
-        public Optional<String> getAPIKey() {
-            return Optional.fromNullable(this.apiKey);
-        }
-
-        @Override
-        public Optional<String> getAppName() {
-            return Optional.fromNullable(this.appName);
-        }
-
-        @Override
-        public Optional<String> getSessionKey() {
-            return Optional.fromNullable(this.sessionKey);
-        }
+    public static AuthHeadersProvider authConfigWithAPIKey(String apiKey, String appName) {
+        return new AuthHeadersProvider.App(apiKey, appName);
     }
 
     public static class ProxyConfig {

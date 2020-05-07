@@ -1,6 +1,7 @@
 package io.sqreen.sasdk.backend;
 
 import com.google.common.collect.Lists;
+import io.sqreen.sasdk.signals_dto.Signal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,7 @@ public class BatchCollector implements Closeable {
     private static final AtomicInteger THREAD_SERIAL = new AtomicInteger();
 
     private final ScheduledReportRunnable reportRunnable = new ScheduledReportRunnable();
-    private final BlockingDeque<Object> queue =  new LinkedBlockingDeque<Object>();
+    private final BlockingDeque<Signal> queue = new LinkedBlockingDeque<Signal>();
 
     // guarded by this; never null
     // rescheduled: 1) on construction 2) when there's a submission 3) when the timer expires
@@ -65,7 +66,7 @@ public class BatchCollector implements Closeable {
      * @return whether the object was accepted
      * @throws IllegalStateException if {@link #close()} has been called.
      */
-    public boolean add(Object signalOrTrace) {
+    public boolean add(Signal signalOrTrace) {
         if (this.closed) {
             throw new IllegalStateException("close() has already been called");
         }
@@ -100,7 +101,7 @@ public class BatchCollector implements Closeable {
      */
     public void forceReport() throws IOException {
         rescheduleNextTimedSubmission();
-        List<Object> signals = Lists.newArrayList();
+        List<Signal> signals = Lists.newArrayList();
         int num = this.queue.drainTo(signals);
         if (num == 0) {
             return;
@@ -119,7 +120,7 @@ public class BatchCollector implements Closeable {
             return false;
         }
 
-        List<Object> signals = Lists.newArrayList();
+        List<Signal> signals = Lists.newArrayList();
         int num = this.queue.drainTo(signals);
         if (num == 0) {
             LOGGER.debug("Queue drained between before call");
@@ -253,9 +254,9 @@ public class BatchCollector implements Closeable {
     }
 
     private class BatchRunnable implements Runnable {
-        private final List<Object> batch;
+        private final List<Signal> batch;
 
-        private BatchRunnable(List<Object> batch) {
+        private BatchRunnable(List<Signal> batch) {
             this.batch = batch;
         }
 

@@ -7,7 +7,7 @@ public interface AuthHeadersProvider {
 
     /**
      * Configures authentication using a legacy per-app API key. These are they
-     * the keys that do not start with <code>org_</code>.
+     * the keys that do not start with <code>env_org_</code>.
      */
     class Api implements AuthHeadersProvider {
         private final String apiKey;

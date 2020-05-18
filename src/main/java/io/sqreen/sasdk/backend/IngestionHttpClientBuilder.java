@@ -338,7 +338,7 @@ public class IngestionHttpClientBuilder {
 
     /**
      * Configures authentication using a legacy per-app API key. These are they
-     * the keys that do not start with <tt>org_</tt>.
+     * the keys that do not start with <code>env_org_</code> or <code>org_</code>.
      * @param apiKey the legacy (per-app) API key. Cannot be null
      * @return a configuration object to pass to
      *         {@link WithConfiguredHttpClient#createWithAuthentication(AuthHeadersProvider)}

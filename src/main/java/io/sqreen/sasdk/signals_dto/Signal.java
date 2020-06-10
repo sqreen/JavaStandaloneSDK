@@ -45,7 +45,7 @@ public abstract class Signal {
      *
      * Its format is constrained by {@link #payloadSchema}.
      */
-    public Map<String, Object> payload; // required
+    public Object payload; // required
 
     /**
      * A map describing the user that generated this signal, if any.

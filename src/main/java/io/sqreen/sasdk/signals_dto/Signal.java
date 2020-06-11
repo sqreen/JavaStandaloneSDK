@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.google.common.base.MoreObjects;
+import io.sqreen.sasdk.signals_dto.context.http.HttpContext;
 
 import java.util.Date;
 import java.util.Map;
@@ -66,7 +67,7 @@ public abstract class Signal {
      * As of the time of this writing, it can only be a set of details about the
      * http request.
      */
-    public Map<String, Object> context;
+    public HttpContext context;
 
     /**
      * The source of the signal, typically identifying a rule or an agent.

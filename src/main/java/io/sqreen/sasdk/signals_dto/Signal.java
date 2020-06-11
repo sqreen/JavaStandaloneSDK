@@ -53,7 +53,7 @@ public abstract class Signal {
      * Typically includes usernames, ip addresses, user agents.
      * The exact schema is documented elsewhere.
      */
-    public Map<String, Object> actor;
+    public Actor actor;
 
     /**
      * A string in the form name/time (e.g.
@@ -113,7 +113,8 @@ public abstract class Signal {
 
     enum SignalType {
         METRIC("metric"),
-        POINT("point");
+        POINT("point"),
+        TRACE("trace");
 
         private final String textValue;
 

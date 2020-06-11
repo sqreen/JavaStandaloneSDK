@@ -88,7 +88,7 @@ public abstract class Signal {
     /**
      * A map supplying information about the runtime.
      */
-    public Map<String, Object> locationInfra;
+    public LocationInfra locationInfra;
 
     private Date time;
 

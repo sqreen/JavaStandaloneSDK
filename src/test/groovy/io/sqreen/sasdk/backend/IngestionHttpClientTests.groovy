@@ -4,9 +4,14 @@ import io.sqreen.agent.test.WireMockTrait
 import io.sqreen.sasdk.backend.exception.AuthenticationException
 import io.sqreen.sasdk.backend.exception.BadHttpStatusException
 import io.sqreen.sasdk.backend.exception.InvalidPayloadException
+import io.sqreen.sasdk.signals_dto.Actor
+import io.sqreen.sasdk.signals_dto.LocationInfra
 import io.sqreen.sasdk.signals_dto.MetricSignal
 import io.sqreen.sasdk.signals_dto.PointSignal
 import io.sqreen.sasdk.signals_dto.Trace
+import io.sqreen.sasdk.signals_dto.context.http.HttpContext
+import io.sqreen.sasdk.signals_dto.context.http.Request
+import io.sqreen.sasdk.signals_dto.context.http.Response
 import org.junit.Test
 
 import java.text.SimpleDateFormat
@@ -43,11 +48,18 @@ class IngestionHttpClientTests implements WireMockTrait {
                   "g" : "h"
                },
                "location_infra" : {
-                  "c" : "d"
+                 "infra" : {
+                   "agent_type" : "java",
+                   "agent_version" : "0.0.0",
+                   "os_type" : "x64-Linux",
+                   "hostname" : "79e1ac01de5e",
+                   "runtime_type" : "java",
+                   "runtime_version" : "1.8.0_252"
+                 }
                },
                "time" : "2020-01-01T00:00:00Z",
                "actor" : {
-                  "ip" : "127.0.0.1"
+                 "ip_addresses" : [ "127.0.0.1" ]
                },
                "trigger" : {
                   "e" : "f"
@@ -56,7 +68,26 @@ class IngestionHttpClientTests implements WireMockTrait {
                   "a" : "b"
                },
                "context" : {
-                  "i" : "j"
+                 "request" : {
+                   "headers" : {
+                     "user-agent" : "curl/7.64.1",
+                     "host" : "localhost:3000"
+                   },
+                   "user_agent" : "curl/7.64.1",
+                   "scheme" : "http",
+                   "verb" : "GET",
+                   "host" : "localhost:3000",
+                   "port" : 3000,
+                   "remote_ip" : "::ffff:172.18.0.1",
+                   "remote_port" : 53986,
+                   "path" : "/id",
+                   "parameters" : {
+                     "query" : ""
+                   }
+                 },
+                 "response" : {
+                   "status" : 200
+                 }
                }
             }
         '''
@@ -70,13 +101,45 @@ class IngestionHttpClientTests implements WireMockTrait {
                 name: 'signalName',
                 payloadSchema: 'mySchema',
                 time: sdf.parse('2020-01-01 00:00:00'),
-                actor: [ip: '127.0.0.1'],
+                actor: new Actor(
+                    ipAddresses: ['127.0.0.1']
+                ),
                 location: [a: 'b'],
-                locationInfra: [c: 'd'],
+                locationInfra: new LocationInfra(
+                        infra: new LocationInfra.Infra(
+                                agentType: 'java',
+                                agentVersion: '0.0.0',
+                                osType: 'x64-Linux',
+                                hostname: '79e1ac01de5e',
+                                runtimeType: 'java',
+                                runtimeVersion: '1.8.0_252'
+                        )
+                ),
                 source: 'srcName',
                 trigger: [e: 'f'],
                 payload: [g: 'h'],
-                context: [i: 'j']
+                context: new HttpContext(
+                        request: new Request(
+                                headers: [
+                                        'user-agent': 'curl/7.64.1',
+                                        'host': 'localhost:3000'
+                                ],
+                                userAgent: 'curl/7.64.1',
+                                scheme: 'http',
+                                verb: 'GET',
+                                host: 'localhost:3000',
+                                port: 3000,
+                                remoteIp: '::ffff:172.18.0.1',
+                                remotePort: 53986,
+                                path: '/id',
+                                parameters: new Request.Parameters(
+                                        query: ''
+                                )
+                        ),
+                        response: new Response(
+                                status: 200
+                        )
+                )
         )
 
 //        proxyRequests('https://ingestion.sqreen.com/')

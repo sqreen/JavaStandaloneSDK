@@ -8,6 +8,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 public class LocationInfra {
     public Infra infra;
 
+    @JsonInclude(NON_NULL)
     public static class Infra {
         public String agentType;
         public String agentVersion;

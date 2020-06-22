@@ -21,7 +21,8 @@ public class Request {
     public String path;
     public String referer;
     public Parameters parameters;
-    
+
+    @JsonInclude(NON_NULL)
     public static class Parameters {
         public String query;
         public String form;

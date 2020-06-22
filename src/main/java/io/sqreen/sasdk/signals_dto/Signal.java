@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.google.common.base.MoreObjects;
+import io.sqreen.sasdk.signals_dto.context.http.HttpContext;
 
 import java.util.Date;
 import java.util.Map;
@@ -45,14 +46,14 @@ public abstract class Signal {
      *
      * Its format is constrained by {@link #payloadSchema}.
      */
-    public Map<String, Object> payload; // required
+    public Object payload; // required
 
     /**
      * A map describing the user that generated this signal, if any.
      * Typically includes usernames, ip addresses, user agents.
      * The exact schema is documented elsewhere.
      */
-    public Map<String, Object> actor;
+    public Actor actor;
 
     /**
      * A string in the form name/time (e.g.
@@ -66,7 +67,7 @@ public abstract class Signal {
      * As of the time of this writing, it can only be a set of details about the
      * http request.
      */
-    public Map<String, Object> context;
+    public HttpContext context;
 
     /**
      * The source of the signal, typically identifying a rule or an agent.
@@ -87,7 +88,7 @@ public abstract class Signal {
     /**
      * A map supplying information about the runtime.
      */
-    public Map<String, Object> locationInfra;
+    public LocationInfra locationInfra;
 
     private Date time;
 
@@ -112,7 +113,8 @@ public abstract class Signal {
 
     enum SignalType {
         METRIC("metric"),
-        POINT("point");
+        POINT("point"),
+        TRACE("trace");
 
         private final String textValue;
 

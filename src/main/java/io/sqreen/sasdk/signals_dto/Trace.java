@@ -30,7 +30,7 @@ import java.util.Collection;
 public class Trace extends Signal {
     @Override
     SignalType getType() {
-        return null;
+        return SignalType.TRACE;
     }
 
     private Collection<Signal> nestedSignals;

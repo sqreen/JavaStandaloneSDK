@@ -9,6 +9,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 @JsonInclude(NON_NULL)
 public class Request {
 
+    public Long startProcessingTime;
+    public Long endProcessingTime;
     public String rid;
     public Map<String, String> headers;
     public String userAgent;
@@ -21,11 +23,4 @@ public class Request {
     public String path;
     public String referer;
     public Parameters parameters;
-
-    @JsonInclude(NON_NULL)
-    public static class Parameters {
-        public String query;
-        public String form;
-        public String cookies;
-    }
 }

@@ -1,3 +1,4 @@
+
 package io.sqreen.sasdk.backend
 
 import io.sqreen.agent.test.WireMockTrait
@@ -10,6 +11,7 @@ import io.sqreen.sasdk.signals_dto.MetricSignal
 import io.sqreen.sasdk.signals_dto.PointSignal
 import io.sqreen.sasdk.signals_dto.Trace
 import io.sqreen.sasdk.signals_dto.context.http.HttpContext
+import io.sqreen.sasdk.signals_dto.context.http.Parameters
 import io.sqreen.sasdk.signals_dto.context.http.Request
 import io.sqreen.sasdk.signals_dto.context.http.Response
 import org.junit.Test
@@ -132,7 +134,7 @@ class IngestionHttpClientTests implements WireMockTrait {
                                 remoteIp: '::ffff:172.18.0.1',
                                 remotePort: 53986,
                                 path: '/id',
-                                parameters: new Request.Parameters(
+                                parameters: new Parameters(
                                         query: ''
                                 )
                         ),

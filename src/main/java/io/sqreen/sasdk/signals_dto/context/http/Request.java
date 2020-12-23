@@ -12,7 +12,7 @@ public class Request {
     public Long startProcessingTime;
     public Long endProcessingTime;
     public String rid;
-    public Map<String, String> headers;
+    public Map<String, String> headers; // XXX: not right. Should allow several values
     public String userAgent;
     public String scheme = "http";
     public HttpMethod verb;

@@ -27,7 +27,7 @@ import java.util.zip.GZIPOutputStream;
 import static com.google.common.base.Preconditions.checkArgument;
 
 class BackendHttpImpl implements Closeable {
-    public final static String JACKSON_ATTRIBUTE = "backend http service";
+    public static final String JACKSON_ATTRIBUTE = "backend http service";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 

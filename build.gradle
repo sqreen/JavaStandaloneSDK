@@ -28,7 +28,7 @@ allprojects {
     }
 
     project.metaClass.guavaDependency =
-        [[group: 'com.google.guava', name: 'guava', version: '20.0'], { // last version for java6
+        [[group: 'com.google.guava', name: 'guava', version: '20.0'], { // last version for java7
             exclude group: 'com.google.code.findbugs', module: 'jsr305'
                 exclude group: 'com.google.errorprone',    module: 'error_prone_annotations'
                 exclude group: 'com.google.j2objc',        module: 'j2objc-annotations'
@@ -40,10 +40,12 @@ allprojects {
 dependencies {
     compile(*project.guavaDependency)
 
+    def JACKSON_VERSION = '2.12.1'
+
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.10'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.7.9' // last version for java6
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.9.1'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: JACKSON_VERSION
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: JACKSON_VERSION
 
     testCompile project(':test-utils')
     testRuntime group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'

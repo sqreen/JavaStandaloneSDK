@@ -25,10 +25,9 @@ import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.io.Closeables.closeQuietly;
 
 class BackendHttpImpl implements Closeable {
-    public final static String JACKSON_ATTRIBUTE = "backend http service";
+    public static final String JACKSON_ATTRIBUTE = "backend http service";
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -213,9 +212,49 @@ class BackendHttpImpl implements Closeable {
 
         HttpUriRequest request = r.build();
 
-        CloseableHttpResponse response;
-        try {
-            response = httpClient.execute(request);
+        try (CloseableHttpResponse response = httpClient.execute(request)){
+
+            int status = response.getStatusLine().getStatusCode();
+            logger.debug("Backend response {}", status);
+
+            try (final InputStream content = response.getEntity().getContent()) {
+
+                if (status != 200 && status != 202) {
+                    ByteSource source = new ByteSource() {
+                        @Override
+                        public InputStream openStream() {
+                            return content;
+                        }
+                    };
+                    String responseBody = source.asCharSource(Charsets.UTF_8).read();
+                    Object errorResponse = parseErrorResponse(responseBody);
+                    String message;
+                    if (errorResponse != null) {
+                        message = "Backend sent status " + status + ": " + errorResponse;
+                    } else {
+                        message = String.format("Unexpected response code: %d. Body %s", status, responseBody);
+                    }
+
+                    if (AuthenticationException.BAD_AUTH_STATUS_CODES.contains(status)) {
+                        throw new AuthenticationException(status, message);
+                    } else if (status == InvalidPayloadException.INVALID_PAYLOAD_STATUS_CODE) {
+                        throw new InvalidPayloadException(message);
+                    } else {
+                        throw new BadHttpStatusException(status,
+                                String.format("Unexpected response code: %d. Body %s", status, responseBody));
+                    }
+                }
+
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Server response is: {}", content);
+                }
+
+                if (returnType == IgnoredResponse.class) {
+                    return returnType.cast(IgnoredResponse.INSTANCE);
+                }
+                return objectReader.forType(returnType).readValue(content);
+            }
+
         } catch (IllegalStateException ise) {
             if ("Connection pool shut down".equals(ise.getMessage())) {
                 throw new IOException("Request failed due to http client thread pool shutdown", ise);
@@ -224,55 +263,6 @@ class BackendHttpImpl implements Closeable {
             }
         }
 
-        try {
-            int status = response.getStatusLine().getStatusCode();
-
-            logger.debug("Backend response {}", status);
-
-            final InputStream content = response.getEntity().getContent();
-
-            if (status != 200 && status != 202) {
-                ByteSource source = new ByteSource() {
-                    @Override
-                    public InputStream openStream() {
-                        return content;
-                    }
-                };
-                String responseBody = source.asCharSource(Charsets.UTF_8).read();
-                Object errorResponse = parseErrorResponse(responseBody);
-                String message;
-                if (errorResponse != null) {
-                    message = "Backend sent status " + status + ": " + errorResponse;
-                } else {
-                    message = String.format("Unexpected response code: %d. Body %s", status, responseBody);
-                }
-
-                if (AuthenticationException.BAD_AUTH_STATUS_CODES.contains(status)) {
-                    throw new AuthenticationException(status, message);
-                } else if (status == InvalidPayloadException.INVALID_PAYLOAD_STATUS_CODE) {
-                    throw new InvalidPayloadException(message);
-                } else {
-                    throw new BadHttpStatusException(status,
-                            String.format("Unexpected response code: %d. Body %s", status, responseBody));
-                }
-            }
-
-            if (logger.isTraceEnabled()) {
-                logger.trace("Server response is: {}", content);
-            }
-
-            try {
-                if (returnType == IgnoredResponse.class) {
-                    return returnType.cast(IgnoredResponse.INSTANCE);
-                }
-                return objectReader.forType(returnType).readValue(content);
-            } finally {
-                closeQuietly(content);
-            }
-
-        } finally {
-            response.close();
-        }
 
     }
 

@@ -16,8 +16,8 @@ plugins {
 group 'io.sqreen'
 version '0.1.0'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 dependencies {
     def GROOVY_VERSION = '2.5.8'

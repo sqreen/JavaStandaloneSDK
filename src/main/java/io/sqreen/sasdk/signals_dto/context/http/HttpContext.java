@@ -10,4 +10,7 @@ public class HttpContext {
     public Request request;
 
     public Response response;
+
+    public Long datadogTraceId;
+    public Long datadogSpanId;
 }
